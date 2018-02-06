@@ -4,6 +4,10 @@ from django.contrib.auth.models import UserManager
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.utils.importlib import import_module
+try:
+    from importlib import import_module
+except ImportError:
+    from django.utils.importlib import import_module
 from django.utils.translation import ugettext_lazy as _
 
 
