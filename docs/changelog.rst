@@ -2,6 +2,11 @@
 Changelog
 =========
 
+
+Changes in 0.8.9
+================
+- Fixed a deprecated import from django
+
 Changes in 0.8.8
 ================
 - Fixed pypi artifact (#919)
