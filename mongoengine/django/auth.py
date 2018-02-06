@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentTypeManager
 from django.contrib import auth
 from django.contrib.auth.models import AnonymousUser
 from django.utils.translation import ugettext_lazy as _
-
+from django import VERSION as dversion
 from .utils import datetime_now
 
 REDIRECT_FIELD_NAME = 'next'
@@ -252,11 +252,15 @@ class User(Document):
         full_name = u'%s %s' % (self.first_name or '', self.last_name or '')
         return full_name.strip()
 
-    def is_anonymous(self):
-        return False
+    if dversion <= (1,10,0): 
+        def is_anonymous(self):
+            return False
 
-    def is_authenticated(self):
-        return True
+        def is_authenticated(self):
+            return True
+    else:
+        is_anonymouns = False
+        is_authenticated = True
 
     def set_password(self, raw_password):
         """Sets the user's password - always use this rather than directly
