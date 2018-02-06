@@ -252,7 +252,7 @@ class User(Document):
         full_name = u'%s %s' % (self.first_name or '', self.last_name or '')
         return full_name.strip()
 
-    if dversion <= (1,10,0): 
+    if dversion < (1,10,0): 
         def is_anonymous(self):
             return False
 
