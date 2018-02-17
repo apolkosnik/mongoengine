@@ -1,8 +1,10 @@
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import UserManager
+from django.contrib.auth.models import UserManager, AbstractBaseUser
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
+from bson.objectid import ObjectId
+
 try:
     from importlib import import_module
 except ImportError:
@@ -33,6 +35,12 @@ def get_user_document():
     return getattr(module, name[dot + 1:])
 
 
+class BaseUser(object):
+
+    is_anonymous = AbstractBaseUser.__dict__['is_anonymous']
+    is_authenticated = AbstractBaseUser.__dict__['is_authenticated']
+
+
 class MongoUserManager(UserManager):
     """A User manager wich allows the use of MongoEngine documents in Django.
 
@@ -50,7 +58,7 @@ class MongoUserManager(UserManager):
     Django will use the model object to access the custom Manager, which will
     replace the original queryset with MongoEngine querysets.
 
-    By default, mongoengine.django.auth.User will be used to store users. You
+    By default, `mongoengine.django.auth.User` will be used to store users. You
     can specify another document class in MONGOENGINE_USER_DOCUMENT in your
     settings.py.
 
@@ -81,8 +89,8 @@ class MongoUserManager(UserManager):
 
     def get(self, *args, **kwargs):
         try:
-            return self.get_query_set().get(*args, **kwargs)
-        except self.model.DoesNotExist:
+            return self.get_queryset().get(*args, **kwargs)
+        except DoesNotExist:
             # ModelBackend expects this exception
             raise self.dj_model.DoesNotExist
 
@@ -90,14 +98,19 @@ class MongoUserManager(UserManager):
     def db(self):
         raise NotImplementedError
 
-    def get_empty_query_set(self):
-        return self.model.objects.none()
+    def get_queryset(self):
+        return get_user_document().objects
 
-    def get_query_set(self):
-        return self.model.objects
+    def create_superuser(self, username, email, password, **extra_fields):
+        """since we use mongo as our database, we don't use
+        django's rule to create a superuser, such as 'python manage.py createsuperuser'.
+        We use mongo's rule --'python manage.py createmongosuperuser instead.
+        """
+        return get_user_document().create_superuser(username, password, email)
 
 
-class MongoUser(models.Model):
+
+class MongoUser(BaseUser, models.Model):
     """"Dummy user model for Django.
 
     MongoUser is used to replace Django's UserManager with MongoUserManager.
@@ -116,3 +129,5 @@ class MongoUser(models.Model):
     def set_password(self, password):
         """Doesn't do anything, but works around the issue with Django 1.6."""
         make_password(password)
+
+MongoUser._meta.pk.to_python = ObjectId
