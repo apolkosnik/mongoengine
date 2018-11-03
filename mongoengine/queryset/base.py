@@ -1163,16 +1163,35 @@ class BaseQuerySet(object):
 
     @property
     def _cursor_args(self):
-        cursor_args = {
-            'snapshot': self._snapshot,
-            'timeout': self._timeout
-        }
-        if self._read_preference is not None:
-            cursor_args['read_preference'] = self._read_preference
+        if not IS_PYMONGO_3:
+            fields_name = 'fields'
+            cursor_args = {
+                'timeout': self._timeout,
+                'snapshot': self._snapshot
+            }
+            if self._read_preference is not None:
+                cursor_args['read_preference'] = self._read_preference
+            else:
+                cursor_args['slave_okay'] = self._slave_okay
         else:
-            cursor_args['slave_okay'] = self._slave_okay
+            fields_name = 'projection'
+            # snapshot is not handled at all by PyMongo 3+
+            # TODO: evaluate similar possibilities using modifiers
+            if self._snapshot:
+                msg = 'The snapshot option is not anymore available with PyMongo 3+'
+                warnings.warn(msg, DeprecationWarning)
+            cursor_args = {
+                'no_cursor_timeout': not self._timeout
+            }
         if self._loaded_fields:
-            cursor_args['fields'] = self._loaded_fields.as_dict()
+            cursor_args[fields_name] = self._loaded_fields.as_dict()
+
+        if self._search_text:
+            if fields_name not in cursor_args:
+                cursor_args[fields_name] = {}
+
+            cursor_args[fields_name]['_text_score'] = {'$meta': 'textScore'}
+
         return cursor_args
 
     @property

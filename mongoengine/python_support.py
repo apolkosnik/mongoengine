@@ -1,10 +1,17 @@
 """Helper functions and types to aid with Python 2.5 - 3 support."""
 
 import sys
+import pymongo
+import six
 
 PY3 = sys.version_info[0] == 3
 PY25 = sys.version_info[:2] == (2, 5)
 UNICODE_KWARGS = int(''.join([str(x) for x in sys.version_info[:3]])) > 264
+
+IS_PYMONGO_3 = pymongo.version_tuple[0] >= 3
+
+# six.BytesIO resolves to StringIO.StringIO in Py2 and io.BytesIO in Py3.
+StringIO = six.BytesIO
 
 if PY3:
     import codecs
