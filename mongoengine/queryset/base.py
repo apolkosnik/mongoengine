@@ -1188,9 +1188,9 @@ class BaseQuerySet(object):
         if self._loaded_fields:
             cursor_args[fields_name] = self._loaded_fields.as_dict()
 
-        if self._search_text:
-            if fields_name not in cursor_args:
-                cursor_args[fields_name] = {}
+        #if self._search_text:
+        #    if fields_name not in cursor_args:
+        #        cursor_args[fields_name] = {}
 
             cursor_args[fields_name]['_text_score'] = {'$meta': 'textScore'}
 
